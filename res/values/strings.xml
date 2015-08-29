@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">GasPrice</string>
+    <string name="us_price_hint">US per gallon</string>
+ <string name="us_gallon_hint">US gallons</string>
+ <string name="can_price_hint">Canadain Price per litre</string>
+ <string name="US">US to Canadian</string>
+ <string name="CAN">Canadian to US</string>
+ <string name="convert">Convert</string>
+ <string name="toCan">In CAN$ / Litre</string>
+ <string name="toUS">In US$ / Gallon</string>
+</resources>

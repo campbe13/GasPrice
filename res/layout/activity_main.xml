@@ -1,0 +1,50 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="ca.campbell.gasprice.MainActivity"
+    android:orientation="vertical" >
+
+    <EditText
+        android:id="@+id/input_price"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/us_price_hint" />
+	<RadioGroup 
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+    <RadioButton android:id="@+id/radio_us"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/US"
+        android:checked="true"
+        android:onClick="onSelCountry"/>
+    <RadioButton android:id="@+id/radio_can"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/CAN"
+        android:onClick="onSelCountry"/>
+</RadioGroup>
+    <Button
+        android:id="@+id/convert"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="calcConversion"
+        android:hint="@string/convert" />
+    <TextView
+        android:id="@+id/calc_price"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/can_price_hint" />
+<TextView
+        android:id="@+id/message"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+         />
+    
+</LinearLayout>
