@@ -7,10 +7,9 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.NoSuchAlgorithmException;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.Activity;
@@ -47,19 +46,21 @@ import android.widget.TextView;
 
 public class MainActivity extends Activity {
 	public static final String TAG = "gassy";
-	public double EXCH_US_TO_CAN =1.0;
+	public double EXCH_US_TO_CAN = 1.0;
 	public double EXCH_CAN_TO_US = 1.0;
 	// given
 	public static final float USGAL_TO_LITRE = 3.78541F;
 	public static final float LITRE_TO_USGAL = 0.264172F;
 	public boolean UStoCan = true;
-	TextView msg; 
+	TextView msg, moneyValue;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		msg = (TextView) findViewById(R.id.message);
+		moneyValue = (TextView) findViewById(R.id.moneyValue);
+		setExchange();
 	}
 
 	public void calcConversion(View view) {
@@ -67,15 +68,16 @@ public class MainActivity extends Activity {
 		TextView calcGasPrice = (TextView) findViewById(R.id.calc_price);
 
 		String strGasPrice = gasPrice.getText().toString();
-		float fgasPrice = Float.parseFloat(strGasPrice);
-		float fcalcGasPrice, calcPrice;
-		setExchange();
+		double fgasPrice = Double.parseDouble(strGasPrice);
+		double fcalcGasPrice, calcPrice;
 		if (UStoCan) {
 			// Given US $ price for a gallon
 			// multiply by Canadian exchange
 			// divide by num of litres in a gallon
-			calcPrice = Math.round(fgasPrice * EXCH_US_TO_CAN / USGAL_TO_LITRE);
-			calcGasPrice.setText(Float.toString(calcPrice));
+			Log.d(TAG, "US to Canadaian $ only "+ fgasPrice*EXCH_US_TO_CAN);
+			calcPrice = Math.round((fgasPrice * EXCH_US_TO_CAN / USGAL_TO_LITRE)*100)/100.0;
+			moneyValue.setText(Double.toString(fgasPrice*EXCH_US_TO_CAN));
+			calcGasPrice.setText(Double.toString(calcPrice));
 			msg.setText(R.string.toCan);
 		} else {
 			// Given Canadian $ price for a litre
@@ -83,7 +85,7 @@ public class MainActivity extends Activity {
 			// divide by num of gallons in a litre
 
 			calcPrice = Math.round(fgasPrice * EXCH_CAN_TO_US / LITRE_TO_USGAL);
-			calcGasPrice.setText(Float.toString(calcPrice));
+			calcGasPrice.setText(Double.toString(calcPrice));
 			msg.setText(R.string.toUS);
 		}
 	}
@@ -140,7 +142,7 @@ public class MainActivity extends Activity {
 		@Override
 		// runs in background (not in UI thread)
 		protected String doInBackground(String... urls) {
-			// params comes from the execute() call: params[0] is the url.
+			// params comes from the execute() call: params[0] is the url.adga
 			try {
 				return downloadUrl(urls[0]);
 			} catch (IOException e) {
@@ -150,53 +152,52 @@ public class MainActivity extends Activity {
 		} // doInBackground()
 
 		protected void onPostExecute(String exchg) {
-			try {
 				EXCH_US_TO_CAN = getExchange(exchg);
-			} catch (Exception e) {
-				Log.e(TAG, "Exception:" + e.getMessage());
-			}
+				Log.e(TAG, "Exchagne rate US to Canadian " +EXCH_US_TO_CAN);
 		} // onPostExecute()
 	} // AsyncTask UseGasAPI()
 
 	private double getExchange(String jsonStr) {
 		final double ERROR = -1.0;
-		try
-		{
+		try {
 			JSONObject mResponseObj = new JSONObject(jsonStr);
-			JSONObject responseObj = mResponseObj.getJSONObject("rate");
+			JSONObject responseObj = mResponseObj.getJSONObject("rates");
 			String rate = responseObj.getString("CAD");
 			return toDouble(rate);
 
 		} catch (Exception e) {
+			Log.e(TAG, "exception JSON "+Log.getStackTraceString(e));
 			return ERROR;
 		}
-	} //getExchange()
+	} // getExchange()
 
 	private double toDouble(String strNum) {
 		double number;
-		try  
-		  {  
-		    number = Double.parseDouble(strNum);  
-		  }  			catch(NumberFormatException e) {  
-		    number = -1.0;  
-		
-		  }  
+		try {
+			number = Double.parseDouble(strNum);
+		} catch (NumberFormatException e) {
+			number = -1.0;
+
+		}
 		return number;
-	  
-		} // toDouble()
+
+	} // toDouble()
 	/*
 	 * Given a URL, establishes an HttpUrlConnection and retrieves the web page
 	 * content as a InputStream, which it returns as a string.
 	 */
 
 	private String downloadUrl(String myurl) throws IOException {
+	// private String downloadUrl(String myurl) {
 		InputStream is = null;
+		URL url;
 		// Only read the first 500 characters of the retrieved
 		// web page content.
 		int len = 500;
 		HttpURLConnection conn = null;
-		URL url = new URL(myurl);
 		try {
+			// URL throws MalformedURLException is an IOException
+			url = new URL(myurl);
 			// create and open the connection
 			conn = (HttpURLConnection) url.openConnection();
 
@@ -232,7 +233,7 @@ public class MainActivity extends Activity {
 			conn.connect();
 
 			int response = conn.getResponseCode();
-			Log.d(TAG, "Server returned: " + response + " aborting read.");
+			Log.d(TAG, "Server returned: " + response);
 
 			/*
 			 * check the status code HTTP_OK = 200 anything else we didn't get
@@ -245,10 +246,15 @@ public class MainActivity extends Activity {
 			is = conn.getInputStream();
 			// read the stream (max len bytes)
 			String contentAsString = readIt(is, len);
+			Log.d(TAG, contentAsString.substring(0,
+						contentAsString.length() < 100 ? contentAsString.length() : 100 ));
 			return contentAsString;
+			/*
 		} catch (IOException e) {
 			Log.e(TAG, "exception" + Log.getStackTraceString(e));
-			throw e;
+			return "error";
+			// throw e;
+			 * */
 		} finally {
 			/*
 			 * Make sure that the InputStream is closed after the app is
@@ -273,18 +279,25 @@ public class MainActivity extends Activity {
 	//
 	/*
 	 * Reads stream from HTTP connection and converts it to a String. See
-	 * stackoverflow or a good explanation of why I did it this way.
+	 * istackoverflow or a good explanation of why I did it this way.
 	 * http://stackoverflow
 	 * .com/questions/3459127/should-i-buffer-the-inputstream
 	 * -or-the-inputstreamreader
 	 */
 	public String readIt(InputStream stream, int len) throws IOException, UnsupportedEncodingException {
 		char[] buffer = new char[len];
+		char[] resize;
 		Reader reader = null;
 		reader = new BufferedReader(new InputStreamReader(stream, "UTF-8"), len);
 		int count = reader.read(buffer);
 		Log.d(TAG, "Bytes read: " + count + "(-1 means end of reader so max of " + len + " )");
-		return new String(buffer);
+		// TODO
+		// create a buffer of size of data
+		// maybe take this out, too time consuming does not gain ??? tb
+		resize = new char[count];
+		for (int i=0 ; i<count ; i++) 
+			resize[i] = buffer[i];
+		return new String(resize);
 	} // readIt()
 
 }

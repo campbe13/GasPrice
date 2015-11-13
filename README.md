@@ -14,3 +14,9 @@ Future / To be done:
 * Use current conversion data via an api
 * Incorporate material design, make it slick 
 
+Last changes:
+implemented US to CAN & data via fixer.io
+need to check if converting to litres properly
+tbd CAN to US 
+future extend to others
+clean up UI 
