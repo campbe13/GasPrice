@@ -8,6 +8,11 @@
  <string name="US">US to Canadian</string>
  <string name="CAN">Canadian to US</string>
  <string name="convert">Convert</string>
+ <string name="nodata">Error retrieving exchange rates.</string>
  <string name="toCan">In CAN$ / Litre</string>
  <string name="toUS">In US$ / Gallon</string>
+ <string name="labelMoneyCAD">Total Canadian $</string>
+ <string name="labelMoneyUSD">Total US $</string>
+ <string name="costPriceLabelCAD">Cost Canadian $/litre</string>
+ <string name="costPriceLabelUSD">Cost US $/litre</string>
 </resources>

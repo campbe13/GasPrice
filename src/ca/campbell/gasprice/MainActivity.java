@@ -46,13 +46,17 @@ import android.widget.TextView;
 
 public class MainActivity extends Activity {
 	public static final String TAG = "gassy";
-	public double EXCH_US_TO_CAN = 1.0;
-	public double EXCH_CAN_TO_US = 1.0;
+	public static final double ERROR = -1.0;
+	public double EXCH_US_TO_CAN = ERROR;
+	public double exchangeFactor = ERROR;
+	public double EXCH_CAN_TO_US = ERROR;
 	// given
 	public static final float USGAL_TO_LITRE = 3.78541F;
 	public static final float LITRE_TO_USGAL = 0.264172F;
 	public boolean UStoCan = true;
-	TextView msg, moneyValue;
+	public String fromCountry, toCountry;
+	TextView msg, moneyValue, moneyValueLabel, litres, calcGasPrice, calcGasPriceLabel;
+	EditText gasPrice;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -60,33 +64,50 @@ public class MainActivity extends Activity {
 		setContentView(R.layout.activity_main);
 		msg = (TextView) findViewById(R.id.message);
 		moneyValue = (TextView) findViewById(R.id.moneyValue);
+		gasPrice = (EditText) findViewById(R.id.input_price);
+		calcGasPrice = (TextView) findViewById(R.id.calc_price);
+		calcGasPriceLabel = (TextView) findViewById(R.id.calc_price_label);
+		UStoCan = true;
+		toCountry = "CAD";
+		fromCountry = "USD";
 		setExchange();
 	}
-
+	
 	public void calcConversion(View view) {
-		EditText gasPrice = (EditText) findViewById(R.id.input_price);
-		TextView calcGasPrice = (TextView) findViewById(R.id.calc_price);
-
 		String strGasPrice = gasPrice.getText().toString();
-		double fgasPrice = Double.parseDouble(strGasPrice);
-		double fcalcGasPrice, calcPrice;
-		if (UStoCan) {
-			// Given US $ price for a gallon
-			// multiply by Canadian exchange
-			// divide by num of litres in a gallon
-			Log.d(TAG, "US to Canadaian $ only "+ fgasPrice*EXCH_US_TO_CAN);
-			calcPrice = Math.round((fgasPrice * EXCH_US_TO_CAN / USGAL_TO_LITRE)*100)/100.0;
-			moneyValue.setText(Double.toString(fgasPrice*EXCH_US_TO_CAN));
-			calcGasPrice.setText(Double.toString(calcPrice));
-			msg.setText(R.string.toCan);
-		} else {
-			// Given Canadian $ price for a litre
-			// multiply by US exchange
-			// divide by num of gallons in a litre
 
-			calcPrice = Math.round(fgasPrice * EXCH_CAN_TO_US / LITRE_TO_USGAL);
-			calcGasPrice.setText(Double.toString(calcPrice));
-			msg.setText(R.string.toUS);
+		double fgasPrice = Double.parseDouble(strGasPrice);
+		double calcPrice;
+
+		if (exchangeFactor == ERROR)
+			msg.setText(R.string.nodata);
+		else {
+			if (UStoCan) {
+				// Given US $ price for a gallon
+				// multiply by Canadian exchange
+				// divide by num of litres in a gallon
+				Log.d(TAG, "US to Canadian $ only " + fgasPrice * exchangeFactor);
+				calcPrice = Math.round((fgasPrice * exchangeFactor / USGAL_TO_LITRE) * 100) / 100.0;
+				Log.d(TAG, "US to Canadian $ per " + calcPrice);
+				moneyValueLabel.setText(R.string.labelMoneyCAD);
+				moneyValue.setText(Double.toString(fgasPrice * exchangeFactor));
+				calcGasPriceLabel.setText(R.string.costPriceLabelCAD);
+				calcGasPrice.setText(Double.toString(calcPrice));
+				msg.setText(R.string.toCan);
+			} else {
+
+				// Given Canadian $ price for a litre
+				// multiply by US exchange
+				// divide by num of gallons in a litre
+				Log.d(TAG, "Canadian to US $ only " + fgasPrice * exchangeFactor);
+				calcPrice = Math.round((fgasPrice * exchangeFactor / LITRE_TO_USGAL) * 100) / 100.0;
+				Log.d(TAG, "US to Canadian $ per " + calcPrice);
+				moneyValueLabel.setText(R.string.labelMoneyUSD);
+				moneyValue.setText(Double.toString(fgasPrice * exchangeFactor));
+				calcGasPriceLabel.setText(R.string.costPriceLabelUSD);
+				calcGasPrice.setText(Double.toString(calcPrice));
+				msg.setText(R.string.toUS);
+			}
 		}
 	}
 
@@ -94,12 +115,22 @@ public class MainActivity extends Activity {
 		boolean checked = ((RadioButton) view).isChecked();
 		switch (view.getId()) {
 		case R.id.radio_can:
-			if (checked)
+			Log.d(TAG, "radio button Canadian");
+			if (checked) {
 				UStoCan = true;
+				toCountry = "CAD";
+				fromCountry = "USD";
+				setExchange();
+			}
 			break;
 		case R.id.radio_us:
-			if (checked)
+			Log.d(TAG, "radio button US");
+			if (checked) {
 				UStoCan = false;
+				toCountry = "USD";
+				fromCountry = "CAD";
+				setExchange();
+			}
 			break;
 		}
 
@@ -114,7 +145,8 @@ public class MainActivity extends Activity {
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		// Handle action bar item clicks here. The action bar will
+		// Handle action bar imoneyValue.setText(Double.toString(fgasPrice *
+		// exchangeFactor));tem clicks here. The action bar will
 		// automatically handle clicks on the Home/Up button, so long
 		// as you specify a parent activity in AndroidManifest.xml.
 		int id = item.getItemId();
@@ -125,14 +157,18 @@ public class MainActivity extends Activity {
 	}
 
 	private void setExchange() {
-		final String APIURL_USTOCAN = "http://api.fixer.io/latest?base=USD&symbols=CAD";
-		final String APIURL_CANTOUS = "http://api.fixer.io/latest?base=CAD&symbols=USD";
+		// example http://api.fixer.io/latest?base=USD&symbols=CAD
+		final String APIURI1 = "http://api.fixer.io/latest?base=";
+		final String APIURI2 = "&symbols=";
+		String uri = APIURI1 + fromCountry + APIURI2 + toCountry;
+		Log.d(TAG, "Set Exchange from " + fromCountry + " to " + toCountry);
+		Log.d(TAG, uri);
 		// first check to see if we can get on the network
 		ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 		NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
 		if (networkInfo != null && networkInfo.isConnected()) {
 			// invoke the AsyncTask to do the dirty work.
-			new UseGasAPI().execute(APIURL_USTOCAN);
+			new UseGasAPI().execute(uri);
 		} else {
 			msg.setText("No network connection available.");
 		}
@@ -152,21 +188,25 @@ public class MainActivity extends Activity {
 		} // doInBackground()
 
 		protected void onPostExecute(String exchg) {
-				EXCH_US_TO_CAN = getExchange(exchg);
-				Log.e(TAG, "Exchagne rate US to Canadian " +EXCH_US_TO_CAN);
+			Log.e(TAG, exchg);
+			if (exchg.contains("error"))
+				exchangeFactor = ERROR;
+			else {
+				exchangeFactor = getExchange(exchg);
+				Log.d(TAG, "Exchagne rate US to Canadian " + exchangeFactor);
+			}
 		} // onPostExecute()
 	} // AsyncTask UseGasAPI()
 
 	private double getExchange(String jsonStr) {
-		final double ERROR = -1.0;
 		try {
 			JSONObject mResponseObj = new JSONObject(jsonStr);
 			JSONObject responseObj = mResponseObj.getJSONObject("rates");
-			String rate = responseObj.getString("CAD");
+			String rate = responseObj.getString(toCountry);
 			return toDouble(rate);
 
 		} catch (Exception e) {
-			Log.e(TAG, "exception JSON "+Log.getStackTraceString(e));
+			Log.e(TAG, "exception JSON " + Log.getStackTraceString(e));
 			return ERROR;
 		}
 	} // getExchange()
@@ -188,7 +228,7 @@ public class MainActivity extends Activity {
 	 */
 
 	private String downloadUrl(String myurl) throws IOException {
-	// private String downloadUrl(String myurl) {
+		// private String downloadUrl(String myurl) {
 		InputStream is = null;
 		URL url;
 		// Only read the first 500 characters of the retrieved
@@ -240,35 +280,36 @@ public class MainActivity extends Activity {
 			 * what we want in the data.
 			 */
 			if (response != HttpURLConnection.HTTP_OK)
-				return "Server returned: " + response + " aborting read.";
+				return "Error server returned: " + response + " aborting read.";
 
 			// get the stream for the data from the website
 			is = conn.getInputStream();
 			// read the stream (max len bytes)
 			String contentAsString = readIt(is, len);
-			Log.d(TAG, contentAsString.substring(0,
-						contentAsString.length() < 100 ? contentAsString.length() : 100 ));
+			Log.d(TAG, contentAsString.substring(0, contentAsString.length() < 100 ? contentAsString.length() : 100));
 			return contentAsString;
 			/*
-		} catch (IOException e) {
-			Log.e(TAG, "exception" + Log.getStackTraceString(e));
-			return "error";
-			// throw e;
-			 * */
-		} finally {
-			/*
-			 * Make sure that the InputStream is closed after the app is
-			 * finished using it. Make sure the connection is closed after the
-			 * app is finished using it.
+			 * } catch (IOException e) { Log.e(TAG, "exception" +
+			 * Log.getStackTraceString(e)); return "error"; // throw e;
 			 */
-
+		} finally {
+			// Clean up resources before return
 			if (is != null) {
 				try {
+					/*
+					 * Make sure that the InputStream is closed after the app is
+					 * finished using it.
+					 */
 					is.close();
 				} catch (IOException ignore) {
 				}
 				if (conn != null)
 					try {
+						/*
+						 * Make sure the connection is closed after the
+						 * 
+						 * app is finished using it.
+						 */
 						conn.disconnect();
 					} catch (IllegalStateException ignore) {
 					}
@@ -295,7 +336,7 @@ public class MainActivity extends Activity {
 		// create a buffer of size of data
 		// maybe take this out, too time consuming does not gain ??? tb
 		resize = new char[count];
-		for (int i=0 ; i<count ; i++) 
+		for (int i = 0; i < count; i++)
 			resize[i] = buffer[i];
 		return new String(resize);
 	} // readIt()

@@ -43,19 +43,67 @@
         android:hint="@string/convert"
         android:onClick="calcConversion" />
 
-    <TextView
-        android:id="@+id/calc_price"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="@string/can_price_hint" />
+        android:orientation="horizontal" >
+
+        <TextView
+            android:id="@+id/moneyValueLabel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight=".35"
+            android:text="Total Canadian $" />
+
+        <TextView
+            android:id="@+id/moneyValue"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight=".65"
+            android:hint="@string/can_price_hint" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight=".35"
+            android:text="Total Litres " />
+
+        <TextView
+            android:id="@+id/litres"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight=".65"
+            android:text="3.78541" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+
+        <TextView
+            android:id="@+id/calc_price_label"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight=".35"
+            android:text="Cost Canadian $/litre" />
+
+        <TextView
+            android:id="@+id/calc_price"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight=".65" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/message"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
-    <TextView
-        android:id="@+id/moneyValue"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-    
+
 </LinearLayout>
